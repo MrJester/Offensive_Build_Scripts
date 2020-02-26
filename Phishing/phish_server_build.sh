@@ -64,13 +64,13 @@ export TERM=xterm
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 
 ##### Check Internet access
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
+(( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
 #--- Can we ping google?
 for i in {1..10}; do ping -c 1 -W ${i} www.google.com &>/dev/null && break; done
 #--- Run this, if we can't
 if [[ "$?" -ne 0 ]]; then
-  echo -e "\n\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
-  echo -e "\n\n ${RED}[!]${RESET} Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
+  echo -e "\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
+  echo -e "\n ${RED}[!]${RESET} Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
   chattr -i /etc/resolv.conf 2>/dev/null
   dhclient -r
   #--- Second interface causing issues?
@@ -88,23 +88,23 @@ if [[ "$?" -ne 0 ]]; then
   _CMD="$(ping -c 1 8.8.8.8 &>/dev/null)"
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
-    echo -e "\n\n ${RED}[!]${RESET} ${RED}No Internet access${RESET}" 1>&2
-    echo -e "\n\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n ${RED}[!]${RESET} ${RED}No Internet access${RESET}" 1>&2
+    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
     sleep 10
     exit 1
   fi
   _CMD="$(ping -c 1 www.google.com &>/dev/null)"
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
-    echo -e "\n\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
-    echo -e "\n\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
+    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
     sleep 10
     exit 1
   fi
   if [[ "$_TMP" == "false" ]]; then
     (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected"
     (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)"
-    echo -e "\n\n ${RED}[!]${RESET} Quitting..." 1>&2
+    echo -e "\n ${RED}[!]${RESET} Quitting..." 1>&2
     sleep 10
     exit 1
   fi
@@ -125,8 +125,8 @@ read -r PRIDOMAIN
 ##### FUNCTIONS #####
 ##### Initial Ubuntu Config
 if [[ ! -f /root/.phish_firstrun ]]; then
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Initial Ubuntu Configuration${RESET}"
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Installing Updates${RESET}"
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Initial Ubuntu Configuration${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}Installing Updates${RESET}"
   touch /root/.phish_firstrun
 
   apt-get -qq update >/dev/null 2>&1
@@ -135,7 +135,7 @@ if [[ ! -f /root/.phish_firstrun ]]; then
   apt-get -qq -y autoremove >/dev/null 2>&1
 
   apt-get install -qq -y nmap git >/dev/null 2>&1 \
-  || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
+  || echo -e "\n ${RED}[!] Issue with apt install${RESET}"
 
   update-rc.d nfs-common disable >/dev/null 2>&1
   update-rc.d rpcbind disable >/dev/null 2>&1
@@ -161,16 +161,16 @@ EOF
 $PRIDOMAIN
 EOF
 
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}The System will now reboot!${RESET}"
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Please rerun this script after the system comes back online.${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}The System will now reboot!${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}Please rerun this script after the system comes back online.${RESET}"
   sleep 5
   reboot
 else
   rm -rf /root/.phish_firstrun >/dev/null 2>&1
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping this step.${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping this step.${RESET}"
 
   ##### SSH Configuration
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSH Configuration${RESET}"
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSH Configuration${RESET}"
   systemctl stop ssh.service >/dev/null 2>&1
   mkdir /etc/ssh/default_keys >/dev/null 2>&1
   mv /etc/ssh/ssh_host_* /etc/ssh/default_keys/
@@ -181,9 +181,9 @@ else
 
 
   ##### SSL Configuration
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSL Configuration${RESET}"
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSL Configuration${RESET}"
   git clone -q -b master https://github.com/certbot/certbot.git /opt/letsencrypt \
-  || echo -e "\n\n ${RED}[!] Issue when git cloning${RESET}" 1>&2
+  || echo -e "\n ${RED}[!] Issue when git cloning${RESET}" 1>&2
 
   pushd /opt/letsencrypt >/dev/null
   SECDOMAINS=()
@@ -208,9 +208,9 @@ else
 
 
   ##### GoPhish Installation
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}GoPhish Installation${RESET}"
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}GoPhish Installation${RESET}"
   apt-get install -qq -y unzip >/dev/null 2>&1 \
-  || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
+  || echo -e "\n ${RED}[!] Issue with apt install${RESET}"
   rm -rf /opt/gophish
   wget -L -O '/tmp/gophish.zip' https://github.com/gophish/gophish/releases/download/v0.9.0/gophish-v0.9.0-linux-64bit.zip >/dev/null 2>&1
   unzip -qq /tmp/gophish.zip -d /opt/gophish
@@ -229,14 +229,36 @@ else
   sed -i 's/"use_tls" : false/"use_tls" : true/g' config.json
   sed -i "s/example.crt/${PHISH_DOMAIN}.crt/g" config.json
   sed -i "s/example.key/${PHISH_DOMAIN}.key/g" config.json
+
+  cat >> /etc/systemd/system/gophish.service << EOF
+[Unit]
+Description=GoPhish service
+After=syslog.target network.target
+[Service]
+User=root
+Type=simple
+WorkingDirectory=/opt/gophish
+ExecStart=/opt/gophish/gophish
+ExecStop=/usr/bin/pkill -f gophish
+Restart=always
+TimeoutStartSec=60
+RestartSec=60
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gophish
+
+[Install]
+WantedBy=multi-user.target network-online.target
+EOF
+  systemctl enable gophish
   popd >/dev/null
 
 
   ##### Postfix, Dovecot Installation
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Postfix & Dovecot Installation${RESET}"
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Postfix & Dovecot Installation${RESET}"
   echo 'opendmarc opendmarc/dbconfig-install boolean false'|debconf-set-selections
   apt-get install -qq -y dovecot-imapd dovecot-lmtpd postfix postgrey postfix-policyd-spf-python opendkim opendkim-tools opendmarc mailutils >/dev/null 2>&1 \
-  || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
+  || echo -e "\n ${RED}[!] Issue with apt install${RESET}"
 
   ### Configuring Postfix
   echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter the IP Address of the phishing redirector: ${RESET}"
