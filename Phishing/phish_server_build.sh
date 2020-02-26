@@ -336,11 +336,11 @@ localhost
 ${PRIDOMAIN}
 EOF
 
-  cd "/etc/opendkim/keys/${PRIDOMAIN}" || exit
+  pushd "/etc/opendkim/keys/${PRIDOMAIN}"
   opendkim-genkey -s mail -d "${PRIDOMAIN}"
   echo 'SOCKET="inet:12301"' >> /etc/default/opendkim
   chown -R opendkim:opendkim /etc/opendkim
-
+  popd >/dev/null
 
   ### OpenDMARC
   cat <<-EOF > /etc/opendmarc.conf
