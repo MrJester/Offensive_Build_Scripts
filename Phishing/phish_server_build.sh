@@ -8,14 +8,19 @@
 #    Script based off this initial script:                                 #
 #          https://github.com/n0pe-sled/Postfix-Server-Setup               #
 #                                                                          #
-#    Script Functions on Ubuntu 19.10, GoPhish 0.9.0                       #
+#    Script has been tested and working on the following:                  #
+#       Operating System                                                   #
+#           Ubuntu 19.10                                                   #
+#                                                                          #
+#       Software                                                           #
+#           GoPhish 0.9.0                                                  #
 #                                                                          #
 #  Author:                                                                 #
 #    Ryan Hays                                                             #
 #**************************************************************************#
 # TODO:
-#
-
+#   Convert this to a SaltStack deployment
+#**************************************************************************#
 
 # Setup a log file to catch all output
 exec > >(tee -ia /var/log/phish_build.log)
@@ -64,8 +69,8 @@ echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 for i in {1..10}; do ping -c 1 -W ${i} www.google.com &>/dev/null && break; done
 #--- Run this, if we can't
 if [[ "$?" -ne 0 ]]; then
-  echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
-  echo -e ' '${RED}'[!]'${RESET}" Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
+  echo -e "\n\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
+  echo -e "\n\n ${RED}[!]${RESET} Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
   chattr -i /etc/resolv.conf 2>/dev/null
   dhclient -r
   #--- Second interface causing issues?
@@ -83,23 +88,23 @@ if [[ "$?" -ne 0 ]]; then
   _CMD="$(ping -c 1 8.8.8.8 &>/dev/null)"
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
-    echo -e ' '${RED}'[!]'${RESET}" ${RED}No Internet access${RESET}" 1>&2
-    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n\n ${RED}[!]${RESET} ${RED}No Internet access${RESET}" 1>&2
+    echo -e "\n\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
     sleep 10
     exit 1
   fi
   _CMD="$(ping -c 1 www.google.com &>/dev/null)"
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
-    echo -e ' '${RED}'[!]'${RESET}" ${RED}Possible DNS issues${RESET}(?)" 1>&2
-    echo -e ' '${RED}'[!]'${RESET}" You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
+    echo -e "\n\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
     sleep 10
     exit 1
   fi
   if [[ "$_TMP" == "false" ]]; then
     (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected"
     (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)"
-    echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
+    echo -e "\n\n ${RED}[!]${RESET} Quitting..." 1>&2
     sleep 10
     exit 1
   fi
@@ -108,30 +113,32 @@ else
 fi
 
 CONTINUE='N'
-read -p "Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with those required IPs. You should also have the DNS entries also specified within your configuraiton.  Continue (y/N): " -r CONTINUE
+echo -e " ${BLUE}[*]${RESET} ${BOLD}Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with\n those required IPs. You should also have the DNS entries also specified within your configuraiton.\nContinue (y/N): ${RESET}"
+read -r CONTINUE
 if [[ "${CONTINUE^^}" == "N" ]]; then
   exit
 fi
 
-read -p "Enter your hostname/primary domain name eg: mail.example.com: " -r PRIDOMAIN
+echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your hostname/primary domain name eg: mail.example.com: ${RESET}"
+read -r PRIDOMAIN
 
 ##### FUNCTIONS #####
 ##### Initial Ubuntu Config
 if [[ ! -f /root/.phish_firstrun ]]; then
   (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Initial Ubuntu Configuration${RESET}"
-  echo -e "\n\n ${BLUE}[*]${RESET} Installing Updates${RESET}"
+  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Installing Updates${RESET}"
   touch /root/.phish_firstrun
 
-  apt-get -qq update > /dev/null 2>&1
-  apt-get -qq -y upgrade > /dev/null 2>&1
-  apt-get -qq -y dist-upgrade > /dev/null 2>&1
-  apt-get -qq -y autoremove > /dev/null 2>&1
+  apt-get -qq update >/dev/null 2>&1
+  apt-get -qq -y upgrade >/dev/null 2>&1
+  apt-get -qq -y dist-upgrade >/dev/null 2>&1
+  apt-get -qq -y autoremove >/dev/null 2>&1
 
-  apt-get install -qq -y nmap git \
+  apt-get install -qq -y nmap git >/dev/null 2>&1 \
   || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
 
-  update-rc.d nfs-common disable > /dev/null 2>&1
-  update-rc.d rpcbind disable > /dev/null 2>&1
+  update-rc.d nfs-common disable >/dev/null 2>&1
+  update-rc.d rpcbind disable >/dev/null 2>&1
 
   cat <<-EOF >> /etc/sysctl.conf
 net.ipv6.conf.all.disable_ipv6 = 1
@@ -143,9 +150,7 @@ net.ipv6.conf.ppp0.disable_ipv6 = 1
 net.ipv6.conf.tun0.disable_ipv6 = 1
 EOF
 
-  sysctl -p > /dev/null 2>&1
-
-  echo -e "\n\n ${BLLUE}[*]${RESET} Changing Hostname${RESET}"
+  sysctl -p >/dev/null 2>&1
 
   cat <<-EOF > /etc/hosts
 127.0.1.1 $PRIDOMAIN $PRIDOMAIN
@@ -156,60 +161,63 @@ EOF
 $PRIDOMAIN
 EOF
 
-  echo -e "\n\n ${BLUE}[*]${RESET} The System will now reboot!${RESET}"
-  echo -e "\n ${BLUE}{*]${RESET} Please rerun this script after the system comes back online${RESET}"
+  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}The System will now reboot!${RESET}"
+  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Please rerun this script after the system comes back online.${RESET}"
   sleep 5
   reboot
 else
-  rm -rf /root/.phish_firstrun > /dev/null 2>&1
-  echo -e "${BLUE}[*] First run of the script already performed skipping this step.${RESET}"
+  rm -rf /root/.phish_firstrun >/dev/null 2>&1
+  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping this step.${RESET}"
 
   ##### SSH Configuration
   (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSH Configuration${RESET}"
-  systemctl stop ssh.service > /dev/null 2>&1
-  mkdir /etc/ssh/default_keys > /dev/null 2>&1
+  systemctl stop ssh.service >/dev/null 2>&1
+  mkdir /etc/ssh/default_keys >/dev/null 2>&1
   mv /etc/ssh/ssh_host_* /etc/ssh/default_keys/
-  dpkg-reconfigure openssh-server > /dev/null 2>&1
-  systemctl enable ssh.service > /dev/null 2>&1
-  systemctl start ssh.service > /dev/null 2>&1
+  dpkg-reconfigure openssh-server >/dev/null 2>&1
+  sed -i "s/PermitRootLogin yes/PermitRootLogin without-password/g" /etc/ssh/sshd_config
+  systemctl enable ssh.service >/dev/null 2>&1
+  systemctl start ssh.service >/dev/null 2>&1
 
 
   ##### SSL Configuration
   (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSL Configuration${RESET}"
   git clone -q -b master https://github.com/certbot/certbot.git /opt/letsencrypt \
-	|| echo -e "${RED}[!] Issue when git cloning${RESET}" 1>&2
+  || echo -e "\n\n ${RED}[!] Issue when git cloning${RESET}" 1>&2
 
-	pushd /opt/letsencrypt >/dev/null
-	SECDOMAINS=()
-	i=0
-	while; do
-	  read -p "Enter any secondary domains needed for engagement eg: website.example.com. Enter done to exit: " -r domain
-	  if [[ "$domain" != "done" ]]; then
-	    SECDOMAINS[$i]=$domain
-	  else
-	    break
-	  fi
-	  ((i++))
-	done
-	CLI_CMD="./certbot-auto certonly --standalone -d ${PRIDOMAIN}"
-	for x in "${SECDOMAINS[@]}"; do
-	  CLI_CMD="$CLI_CMD -d $x"
-	done
-	CLI_CMD="$CLI_CMD -n --register-unsafely-without-email --agree-tos"
-  ${CLI_CMD}
+  pushd /opt/letsencrypt >/dev/null
+  SECDOMAINS=()
+  i=0
+  while true; do
+    echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter any secondary domains needed for engagement eg: website.example.com. Enter done to exit: ${RESET}"
+    read -r domain
+    if [[ "$domain" != "done" ]]; then
+      SECDOMAINS[$i]=$domain
+      else
+        break
+      fi
+      ((i++))
+  done
+  CLI_CMD="./certbot-auto certonly --standalone -d ${PRIDOMAIN}"
+  for x in "${SECDOMAINS[@]}"; do
+    CLI_CMD="$CLI_CMD -d $x"
+  done
+  CLI_CMD="$CLI_CMD -n --register-unsafely-without-email --agree-tos"
+  ${CLI_CMD} >/dev/null 2>&1
   popd >/dev/null
 
 
   ##### GoPhish Installation
   (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}GoPhish Installation${RESET}"
-  apt-get install -qq -y unzip \
+  apt-get install -qq -y unzip >/dev/null 2>&1 \
   || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
   rm -rf /opt/gophish
-	wget -L -O '/tmp/gophish.zip' https://github.com/gophish/gophish/releases/download/v0.9.0/gophish-v0.9.0-linux-64bit.zip >/dev/null
-	unzip -qq /tmp/gophish.zip -d /opt/gophish
+  wget -L -O '/tmp/gophish.zip' https://github.com/gophish/gophish/releases/download/v0.9.0/gophish-v0.9.0-linux-64bit.zip >/dev/null 2>&1
+  unzip -qq /tmp/gophish.zip -d /opt/gophish
 
-	pushd /opt/gophish
-	read -p "Enter the phishing domain being used: " -r PHISH_DOMAIN
+  pushd /opt/gophish
+  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter the phishing domain being used: ${RESET}"
+  read -r PHISH_DOMAIN
   sed -i 's/"listen_url": "127.0.0.1:3333"/"listen_url": "0.0.0.0:3333"/g' config.json
   ssl_cert="/etc/letsencrypt/live/${PHISH_DOMAIN}/fullchain.pem"
   ssl_key="/etc/letsencrypt/live/${PHISH_DOMAIN}/privkey.pem"
@@ -226,12 +234,13 @@ else
 
   ##### Postfix, Dovecot Installation
   (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Postfix & Dovecot Installation${RESET}"
-  echo 'opendmarc opendmarc/dbconfig-install boolean false'|debconf-set-selection
-  apt-get install -qq -y dovecot-imapd dovecot-lmtpd postfix postgrey postfix-policyd-spf-python opendkim opendkim-tools opendmarc mailutils \
+  echo 'opendmarc opendmarc/dbconfig-install boolean false'|debconf-set-selections
+  apt-get install -qq -y dovecot-imapd dovecot-lmtpd postfix postgrey postfix-policyd-spf-python opendkim opendkim-tools opendmarc mailutils >/dev/null 2>&1 \
   || echo -e "\n\n ${RED}[!] Issue with apt install${RESET}"
 
   ### Configuring Postfix
-  reap -p "Enter the IP Address of the phishing redirector: " -r RED_IP
+  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter the IP Address of the phishing redirector: ${RESET}"
+  read -r RED_IP
   cat <<-EOF > /etc/postfix/main.cf
 smtpd_banner = \$myhostname ESMTP \$mail_name (Debian/GNU)
 biff = no
@@ -262,7 +271,7 @@ smtpd_milters = inet:12301,inet:localhost:54321
 non_smtpd_milters = inet:12301,inet:localhost:54321
 EOF
 
-	cat <<-EOF >> /etc/postfix/master.cf
+  cat <<-EOF >> /etc/postfix/master.cf
 submission inet n       -       -       -       -       smtpd
 -o syslog_name=postfix/submission
 -o smtpd_tls_wrappermode=no
@@ -275,11 +284,11 @@ submission inet n       -       -       -       -       smtpd
 EOF
 
 
-	### Opendkim
-	mkdir -p "/etc/opendkim/keys/${PRIDOMAIN}" >/dev/null 2>&1
-	cp /etc/opendkim.conf /etc/opendkim.conf.orig
+  ### Opendkim
+  mkdir -p "/etc/opendkim/keys/${PRIDOMAIN}" >/dev/null 2>&1
+  cp /etc/opendkim.conf /etc/opendkim.conf.orig
 
-	cat <<-EOF > /etc/opendkim.conf
+  cat <<-EOF > /etc/opendkim.conf
 domain								*
 AutoRestart						Yes
 AutoRestartRate				10/1h
@@ -299,22 +308,22 @@ UserID								opendkim:opendkim
 Socket								inet:12301@localhost
 EOF
 
-	cat <<-EOF > /etc/opendkim/TrustedHosts
+  cat <<-EOF > /etc/opendkim/TrustedHosts
 127.0.0.1
 localhost
 ${PRIDOMAIN}
 EOF
 
-	cd "/etc/opendkim/keys/${PRIDOMAIN}" || exit
-	opendkim-genkey -s mail -d "${PRIDOMAIN}"
-	echo 'SOCKET="inet:12301"' >> /etc/default/opendkim
-	chown -R opendkim:opendkim /etc/opendkim
+  cd "/etc/opendkim/keys/${PRIDOMAIN}" || exit
+  opendkim-genkey -s mail -d "${PRIDOMAIN}"
+  echo 'SOCKET="inet:12301"' >> /etc/default/opendkim
+  chown -R opendkim:opendkim /etc/opendkim
 
 
-	### OpenDMARC
-	cat <<-EOF > /etc/opendmarc.conf
+  ### OpenDMARC
+  cat <<-EOF > /etc/opendmarc.conf
 AuthservID ${PRIDOMAIN}
-PidFile /var/run/opendmarc.pid
+PidFile /var/run/opendmarc/opendmarc.pid
 RejectFailures false
 Syslog true
 TrustedAuthservIDs ${PRIDOMAIN}
@@ -325,15 +334,15 @@ IgnoreHosts /etc/opendmarc/ignore.hosts
 HistoryFile /var/run/opendmarc/opendmarc.dat
 EOF
 
-	mkdir "/etc/opendmarc/"
-	echo "localhost" > /etc/opendmarc/ignore.hosts
-	chown -R opendmarc:opendmarc /etc/opendmarc
+  mkdir "/etc/opendmarc/" >/dev/null 2>&1
+  echo "localhost" > /etc/opendmarc/ignore.hosts
+  chown -R opendmarc:opendmarc /etc/opendmarc
 
-	echo 'SOCKET="inet:54321"' >> /etc/default/opendmarc
+  echo 'SOCKET="inet:54321"' >> /etc/default/opendmarc
 
 
-	### Dovecot
- 	cat <<-EOF > /etc/dovecot/dovecot.conf
+  ### Dovecot
+  cat <<-EOF > /etc/dovecot/dovecot.conf
 disable_plaintext_auth = no
 mail_privileged_group = mail
 mail_location = mbox:~/mail:INBOX=/var/mail/%u
@@ -382,21 +391,21 @@ ssl_cert = </etc/letsencrypt/live/${PRIDOMAIN}/fullchain.pem
 ssl_key = </etc/letsencrypt/live/${PRIDOMAIN}/privkey.pem
 EOF
 
-	### Service Restart
-	service postfix restart
-	service opendkim restart
-	service opendmarc restart
-	service dovecot restart
+  ### Service Restart
+  service postfix restart
+  service opendkim restart
+  service opendmarc restart
+  service dovecot restart
 
   ##### Displaying DNS Records to Create
 
   EXTIP=$(curl -s http://ipinfo.io/ip)
-	DOMAIN=$(ls /etc/opendkim/keys/ | head -1)
-	FIELDS=$(echo "${DOMAIN}" | tr '.' '\n' | wc -l)
-	DKIM_R=$(cut -d '"' -f 2 "/etc/opendkim/keys/${DOMAIN}/mail.txt" | tr -d "[:space:]")
+  DOMAIN=$(ls /etc/opendkim/keys/ | head -1)
+  FIELDS=$(echo "${DOMAIN}" | tr '.' '\n' | wc -l)
+  DKIM_R=$(cut -d '"' -f 2 "/etc/opendkim/keys/${DOMAIN}/mail.txt" | tr -d "[:space:]")
 
-	if [[ $FIELDS -eq 2 ]]; then
-		cat <<-EOF > dnsentries.txt
+  if [[ $FIELDS -eq 2 ]]; then
+    cat <<-EOF > dnsentries.txt
 DNS Entries for ${DOMAIN}:
 ====================================================================
 Record Type: A
@@ -426,10 +435,10 @@ Value: ${DOMAIN}
 Priority: 10
 TTL: 5 min
 EOF
-		cat dnsentries.txt
-	else
-		prefix=$(echo "${DOMAIN}" | rev | cut -d '.' -f 3- | rev)
-		cat <<-EOF > dnsentries.txt
+    cat dnsentries.txt
+  else
+    prefix=$(echo "${DOMAIN}" | rev | cut -d '.' -f 3- | rev)
+    cat <<-EOF > dnsentries.txt
 DNS Entries for ${DOMAIN}:
 ====================================================================
 Record Type: A
@@ -459,6 +468,6 @@ Value: ${DOMAIN}
 Priority: 10
 TTL: 5 min
 EOF
-		cat dnsentries.txt
-	fi
+    cat dnsentries.txt
+  fi
 fi
