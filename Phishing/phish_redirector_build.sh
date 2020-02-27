@@ -164,7 +164,6 @@ EOF
 
   ### Bash Aliases
   cat <<-EOF > /root/.bash_aliases
-
 ## grep aliases
 alias grep="grep --color=always"
 alias ngrep="grep -n"
@@ -249,21 +248,23 @@ else
 
   ### Add rules to eliminate some headers that could give away the origin of the email
   cat <<-EOF > /etc/postfix/header_checks
-/^Received:.*with ESMTPSA/
-IGNORE /^X-Originating-IP:/
-IGNORE /^X-Mailer:/ IGNORE /^User-Agent:/
-IGNORE
+/^Received:.*with ESMTPSA/ IGNORE
+/^X-Originating-IP:/ IGNORE
+/^X-Mailer:/ IGNORE
+/^User-Agent:/ IGNORE
 EOF
 
   postconf -e 'mime_header_checks = regexp:/etc/postfix/header_checks'
   postconf -e 'header_checks = regexp:/etc/postfix/header_checks'
-  postmap /etc/postfix/header_checks service postfix reload
+  postmap /etc/postfix/header_checks
 
   postconf -e 'mydestination = $myhostname, domain.com, smtp-redirector-02, localhost.localdomain, localhost'
+  postconf -e 'smtp_sasl_auth_enable = yes'
   postconf -e 'smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd'
   postconf -e 'smtp_sasl_security_options = noanonymous'
   postconf -e 'smtp_sasl_tls_security_options = noanonymous'
   postconf -e 'smtp_tls_security_level = encrypt'
+  postconf -e 'header_size_limit = 4096000'
   postconf -e 'relayhost = [smtp.sendgrid.net]:587'
 
   ### Setup sendgrid authentication
@@ -279,3 +280,4 @@ EOF
   chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 
   service postfix restart
+fi

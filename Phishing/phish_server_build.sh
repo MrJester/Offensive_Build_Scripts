@@ -167,7 +167,6 @@ EOF
 
   ### Bash Aliases
   cat <<-EOF > /root/.bash_aliases
-
 ## grep aliases
 alias grep="grep --color=always"
 alias ngrep="grep -n"
@@ -356,14 +355,14 @@ EOF
 
   cat <<-EOF >> /etc/postfix/master.cf
 submission inet n       -       -       -       -       smtpd
--o syslog_name=postfix/submission
--o smtpd_tls_wrappermode=no
--o smtpd_tls_security_level=encrypt
--o smtpd_sasl_auth_enable=yes
--o smtpd_recipient_restrictions=permit_mynetworks,permit_sasl_authenticated,reject
--o milter_macro_daemon_name=ORIGINATING
--o smtpd_sasl_type=dovecot
--o smtpd_sasl_path=private/auth
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_wrappermode=no
+  -o smtpd_tls_security_level=encrypt
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_recipient_restrictions=permit_mynetworks,permit_sasl_authenticated,reject
+  -o milter_macro_daemon_name=ORIGINATING
+  -o smtpd_sasl_type=dovecot
+  -o smtpd_sasl_path=private/auth
 EOF
 
 
@@ -487,70 +486,36 @@ EOF
   FIELDS=$(echo "${DOMAIN}" | tr '.' '\n' | wc -l)
   DKIM_R=$(cut -d '"' -f 2 "/etc/opendkim/keys/${DOMAIN}/mail.txt" | tr -d "[:space:]")
 
-  if [[ $FIELDS -eq 2 ]]; then
-    cat <<-EOF > dnsentries.txt
+
+  cat <<-EOF > dnsentries.txt
 DNS Entries for ${DOMAIN}:
 ====================================================================
 Record Type: A
 Host: @
-Value: ${EXTIP}
-TTL: 5 min
+Value: ${RED_IP}
+TTL: 1 min
 
 Record Type: TXT
 Host: @
-Value: v=spf1 ip4:${EXTIP} -all
-TTL: 5 min
+Value: v=spf1 ip4:${RED_IP} include:sendgrid.net -all
+TTL: 1 min
 
 Record Type: TXT
 Host: mail._domainkey
 Value: ${DKIM_R}
-TTL: 5 min
+TTL: 1 min
 
 Record Type: TXT
-Host: ._dmarc
+Host: _dmarc
 Value: v=DMARC1; p=reject
-TTL: 5 min
+TTL: 1 min
 
 Change Mail Settings to Custom MX and Add New Record
 Record Type: MX
-Host: @
+Host: mail
 Value: ${DOMAIN}
-Priority: 10
-TTL: 5 min
+TTL: 1 min
 EOF
-  else
-    prefix=$(echo "${DOMAIN}" | rev | cut -d '.' -f 3- | rev)
-    cat <<-EOF > dnsentries.txt
-DNS Entries for ${DOMAIN}:
-====================================================================
-Record Type: A
-Host: ${prefix}
-Value: ${EXTIP}
-TTL: 5 min
-
-Record Type: TXT
-Host: ${prefix}
-Value: v=spf1 ip4:${EXTIP} -all
-TTL: 5 min
-
-Record Type: TXT
-Host: mail._domainkey.${prefix}
-Value: ${DKIM_R}
-TTL: 5 min
-
-Record Type: TXT
-Host: ._dmarc
-Value: v=DMARC1; p=reject
-TTL: 5 min
-
-Change Mail Settings to Custom MX and Add New Record
-Record Type: MX
-Host: ${prefix}
-Value: ${DOMAIN}
-Priority: 10
-TTL: 5 min
-EOF
-  fi
 fi
 
 
