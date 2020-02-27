@@ -258,26 +258,27 @@ EOF
   postconf -e 'header_checks = regexp:/etc/postfix/header_checks'
   postmap /etc/postfix/header_checks
 
-  postconf -e 'mydestination = $myhostname, domain.com, smtp-redirector-02, localhost.localdomain, localhost'
-  postconf -e 'smtp_sasl_auth_enable = yes'
-  postconf -e 'smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd'
-  postconf -e 'smtp_sasl_security_options = noanonymous'
-  postconf -e 'smtp_sasl_tls_security_options = noanonymous'
-  postconf -e 'smtp_tls_security_level = encrypt'
-  postconf -e 'header_size_limit = 4096000'
-  postconf -e 'relayhost = [smtp.sendgrid.net]:587'
+  ### This is for SendGrid relaying but currently not working...... 
+  #postconf -e 'mydestination = $myhostname, domain.com, smtp-redirector-02, localhost.localdomain, localhost'
+  #postconf -e 'smtp_sasl_auth_enable = yes'
+  #postconf -e 'smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd'
+  #postconf -e 'smtp_sasl_security_options = noanonymous'
+  #postconf -e 'smtp_sasl_tls_security_options = noanonymous'
+  #postconf -e 'smtp_tls_security_level = encrypt'
+  #postconf -e 'header_size_limit = 4096000'
+  #postconf -e 'relayhost = [smtp.sendgrid.net]:587'
 
   ### Setup sendgrid authentication
-  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your SendGrid username: ${RESET}"
-  read -r SGUSER
+  #echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your SendGrid username: ${RESET}"
+  #read -r SGUSER
 
-  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your SendGrid password: ${RESET}"
-  read -r SGPASS
+  #echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your SendGrid password: ${RESET}"
+  #read -r SGPASS
 
-  echo -e "[smtp.sendgrid.net]:587 ${SGUSER}:${SGPASS}" > /etc/postfix/sasl_passwd
-  postmap /etc/postfix/sasl_passwd
-  chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
-  chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+  #echo -e "[smtp.sendgrid.net]:587 ${SGUSER}:${SGPASS}" > /etc/postfix/sasl_passwd
+  #postmap /etc/postfix/sasl_passwd
+  #chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+  #chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 
   service postfix restart
 fi
