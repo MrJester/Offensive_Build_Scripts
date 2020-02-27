@@ -19,7 +19,8 @@
 #    Ryan Hays                                                             #
 #**************************************************************************#
 # TODO:
-#   Convert this to a SaltStack deployment
+#   - Convert this to a SaltStack deployment
+#   - Add an alias to update redirector IP
 #**************************************************************************#
 
 # Setup a log file to catch all output
@@ -129,6 +130,7 @@ if [[ ! -f /root/.phish_firstrun ]]; then
   echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}Installing Updates${RESET}"
   touch /root/.phish_firstrun
 
+  ### Perfomring system updates
   apt-get -qq update >/dev/null 2>&1
   apt-get -qq -y upgrade >/dev/null 2>&1
   apt-get -qq -y dist-upgrade >/dev/null 2>&1
@@ -137,6 +139,7 @@ if [[ ! -f /root/.phish_firstrun ]]; then
   apt-get install -qq -y nmap git >/dev/null 2>&1 \
   || echo -e "\n ${RED}[!] Issue with apt install${RESET}"
 
+  ### Disabling IPv6
   update-rc.d nfs-common disable >/dev/null 2>&1
   update-rc.d rpcbind disable >/dev/null 2>&1
 
@@ -152,6 +155,7 @@ EOF
 
   sysctl -p >/dev/null 2>&1
 
+  ### Updating hostname
   cat <<-EOF > /etc/hosts
 127.0.1.1 $PRIDOMAIN $PRIDOMAIN
 127.0.0.1 localhost
@@ -159,6 +163,63 @@ EOF
 
   cat <<-EOF > /etc/hostname
 $PRIDOMAIN
+EOF
+
+  ### Bash Aliases
+  cat <<-EOF > /root/.bash_aliases
+
+## grep aliases
+alias grep="grep --color=always"
+alias ngrep="grep -n"
+
+alias egrep="egrep --color=auto"
+
+alias fgrep="fgrep --color=auto"
+
+## Checksums
+alias sha1="openssl sha1"
+alias md5="openssl md5"
+
+## List open ports
+alias ports="netstat -tulanp"
+
+## Get external IP address
+alias ipx="curl -s http://ipinfo.io/ip"
+
+## Directory navigation aliases
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+## Update the OS
+alias update-os='apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y && apt autoremove -y'
+
+## Extract file
+## Extract file, example. "ex package.tar.bz2"
+ex() {
+  if [[ -f \$1 ]]; then
+    case \$1 in
+      *.tar.bz2) tar xjf \$1 ;;
+      *.tar.gz)  tar xzf \$1 ;;
+      *.bz2)     bunzip2 \$1 ;;
+      *.rar)     rar x \$1 ;;
+      *.gz)      gunzip \$1  ;;
+      *.tar)     tar xf \$1  ;;
+      *.tbz2)    tar xjf \$1 ;;
+      *.tgz)     tar xzf \$1 ;;
+      *.zip)     unzip \$1 ;;
+      *.Z)       uncompress \$1 ;;
+      *.7z)      7z x \$1 ;;
+      *)         echo \$1 cannot be extracted ;;
+    esac
+  else
+    echo \$1 is not a valid file
+  fi
+}
+
+## openvas
+alias openvas="openvas-stop; openvas-start; sleep 3s; xdg-open https://127.0.0.1:9392/ >/dev/null 2>&1"
 EOF
 
   echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}The System will now reboot!${RESET}"
