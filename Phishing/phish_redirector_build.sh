@@ -248,10 +248,26 @@ else
 
   ### Add rules to eliminate some headers that could give away the origin of the email
   cat <<-EOF > /etc/postfix/header_checks
-/^Received:.*with ESMTPSA/ IGNORE
+/^Received: .*/ IGNORE
 /^X-Originating-IP:/ IGNORE
 /^X-Mailer:/ IGNORE
 /^User-Agent:/ IGNORE
+EOF
+
+  cat <<-EOF >> /etc/postfix/master.cf
+auth-cleanup unix n - - - 0 cleanup
+  -o header_checks=pcre:/etc/postfix/header_checks
+
+submission inet n       -       -       -       -       smtpd
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_wrappermode=no
+  -o smtpd_tls_security_level=encrypt
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_recipient_restrictions=permit_mynetworks,permit_sasl_authenticated,reject
+  -o milter_macro_daemon_name=ORIGINATING
+  -o smtpd_sasl_type=dovecot
+  -o smtpd_sasl_path=private/auth
+  -o cleanup_service_name=auth-cleanup
 EOF
 
   postconf -e 'mime_header_checks = regexp:/etc/postfix/header_checks'

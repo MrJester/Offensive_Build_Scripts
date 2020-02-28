@@ -495,6 +495,11 @@ Host: @
 Value: ${RED_IP}
 TTL: 1 min
 
+Record Type: A
+Host: [Use hostname of redirector]
+Value: ${RED_IP}
+TTL: 1 min
+
 Record Type: TXT
 Host: @
 Value: v=spf1 ip4:${RED_IP} include:sendgrid.net -all
