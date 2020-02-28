@@ -254,7 +254,8 @@ else
       ./msfinstall
 
       update-rc.d postgresql enable
-      sudo -u postgres msfdb init --user postgres --password password
+      MSFPASS=$()< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};echo;)
+      sudo -u postgres msfdb init --user postgres --pass ${MSFPASS}
 
       popd >/dev/null
       ;;
