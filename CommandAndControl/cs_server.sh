@@ -40,19 +40,28 @@ TOTAL=$(grep '(${STAGE}/${TOTAL})' $0 | wc -l);(( TOTAL-- ))
 STARTTIME=$(date +%s)
 export STAGING_KEY="RANDOM"
 export DEBIAN_FRONTEND="noninteractive"
+AVAIL_C2=(posh)
 
 
 ##### PRE CHECKS #####
 ##### Check if we are running as root - else this script will fail (hard!)
 if [[ "${EUID}" -ne 0 ]]; then
-  echo -e ' '${RED}'[!]'${RESET}" This script must be ${RED}run as root${RESET}" 1>&2
-  echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
-  sleep 10
+  echo -e " ${RED}[!]${RESET} This script must be ${RED}run as root${RESET}"
+  echo -e " ${RED}[!]${RESET} Quitting..."
   exit 1
 else
   echo -e " ${BLUE}[*]${RESET} ${BOLD}Phish Server Build Script${RESET}"
   sleep 3
 fi
+
+##### Checks for valid C2 framewokr provided
+if [ "$1" == "" ]; then
+  echo -e " ${RED}[!]${RESET} You must specify a type of C2 framework to deploy."
+  echo -e " ${RED}[!]${RESET} Available Frameworks: "
+  printf '%s\n' "${AVAIL_C2[@]^^}"
+  exit 1
+fi
+C2SERVER=${1^^}
 
 ##### Fix display output for GUI programs (when connecting via SSH)
 export DISPLAY=:0.0
