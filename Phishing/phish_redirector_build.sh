@@ -1,12 +1,10 @@
 #!/bin/bash
 
 #**************************************************************************#
-#  Filename: phish_build.sh             (Created: 2020-02-27)              #
-#                                       (Updated: YYYY-MM-DD)              #
+#  Filename: phish_redirector_build.sh             (Created: 2020-02-27)   #
+#                                                  (Updated: YYYY-MM-DD)   #
 #  Info:                                                                   #
 #    Installs, configures, and deploys a phishing redirector.              #
-#    Script based off this initial script:                                 #
-#          https://github.com/n0pe-sled/Postfix-Server-Setup               #
 #                                                                          #
 #    Script has been tested and working on the following:                  #
 #       Operating System                                                   #
@@ -21,8 +19,8 @@
 #**************************************************************************#
 
 # Setup a log file to catch all output
-exec > >(tee -ia /var/log/phish_build.log)
-exec 2> >(tee -ia /var/log/phish_build_err.log)
+exec > >(tee -ia /var/log/phish_redirector_build.log)
+exec 2> >(tee -ia /var/log/phish_redirector_build_err.log)
 
 
 ##### (Cosmetic) Colour output
