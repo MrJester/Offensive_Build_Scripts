@@ -34,6 +34,7 @@ RESET="\033[00m"       # Normal
 
 ##### Setup some global vars
 STAGE=0
+# shellcheck disable=SC2126
 TOTAL=$(grep '(${STAGE}/${TOTAL})' $0 | wc -l);(( TOTAL-- ))
 STARTTIME=$(date +%s)
 export STAGING_KEY="RANDOM"
@@ -43,11 +44,11 @@ export DEBIAN_FRONTEND="noninteractive"
 ##### PRE CHECKS #####
 ##### Check if we are running as root - else this script will fail (hard!)
 if [[ "${EUID}" -ne 0 ]]; then
-  echo -e " ${RED}[!]${RESET} You must specify a type of C2 framework to deploy."
-  echo -e " ${RED}[!]${RESET} Available Frameworks: "
+  echo -e ' '${RED}'[!]'${RESET}" This script must be ${RED}run as root${RESET}" 1>&2
+  echo -e ' '${RED}'[!]'${RESET}" Quitting..." 1>&2
   exit 1
 else
-  echo -e " ${BLUE}[*]${RESET} ${BOLD}Phish Server Build Script${RESET}"
+  echo -e " ${BLUE}[*]${RESET} ${BOLD}Phish Redirector Server Build Script${RESET}"
   sleep 3
 fi
 
@@ -294,4 +295,28 @@ EOF
   #chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 
   service postfix restart
+
+  ##### CLEANUP #####
+  ##### Clean the system
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Cleaning${RESET} the system"
+  #--- Clean package manager
+  for FILE in clean autoremove; do apt-get -y -qq "${FILE}"; done
+  apt-get -y -qq purge $(dpkg -l | tail -n +6 | egrep -v '^(h|i)i' | awk '{print $2}')   # Purged packages
+  #--- Update slocate database
+  updatedb
+  #--- Reset folder location
+  cd ~/ &>/dev/null
+  #--- Remove any history files (as they could contain sensitive info)
+  history -c 2>/dev/null
+  # shellcheck disable=SC2013
+  for i in $(cut -d: -f6 /etc/passwd | sort -u); do
+  [[ -e "${i}" ]] && find "${i}" -type f -name '.*_history' -delete
+  done
+
+  ##### Time taken
+  FINISHTIME=$(date +%s)
+
+  cat dnsentries.txt
+  echo -e "\n ${YELLOW}[i]${RESET} Time (roughly) taken: ${YELLOW}$(( $(( FINISHTIME - STARTTIME )) / 60 )) minutes${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} Please reboot the system now to ensure all changes are taken. ${YELLOW}${RESET}"
 fi
