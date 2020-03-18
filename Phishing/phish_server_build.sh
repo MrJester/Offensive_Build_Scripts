@@ -520,28 +520,31 @@ Host: mail
 Value: ${DOMAIN}
 TTL: 1 min
 EOF
+
+  ##### CLEANUP #####
+  ##### Clean the system
+  (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Cleaning${RESET} the system"
+  #--- Clean package manager
+  for FILE in clean autoremove; do apt-get -y -qq "${FILE}"; done
+  apt-get -y -qq purge $(dpkg -l | tail -n +6 | egrep -v '^(h|i)i' | awk '{print $2}')   # Purged packages
+  #--- Update slocate database
+  updatedb
+  #--- Reset folder location
+  cd ~/ &>/dev/null
+  #--- Remove any history files (as they could contain sensitive info)
+  history -c 2>/dev/null
+  # shellcheck disable=SC2013
+  for i in $(cut -d: -f6 /etc/passwd | sort -u); do
+  [[ -e "${i}" ]] && find "${i}" -type f -name '.*_history' -delete
+  done
+
+  ##### Time taken
+  FINISHTIME=$(date +%s)
+
+  cat dnsentries.txt
+  echo -e "\n ${YELLOW}[i]${RESET} Time (roughly) taken: ${YELLOW}$(( $(( FINISHTIME - STARTTIME )) / 60 )) minutes${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} Please reboot the system now to ensure all changes are taken. ${YELLOW}${RESET}"
+
 fi
 
 
-##### CLEANUP #####
-##### Clean the system
-(( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Cleaning${RESET} the system"
-#--- Clean package manager
-for FILE in clean autoremove; do apt-get -y -qq "${FILE}"; done
-apt-get -y -qq purge $(dpkg -l | tail -n +6 | egrep -v '^(h|i)i' | awk '{print $2}')   # Purged packages
-#--- Update slocate database
-updatedb
-#--- Reset folder location
-cd ~/ &>/dev/null
-#--- Remove any history files (as they could contain sensitive info)
-history -c 2>/dev/null
-for i in $(cut -d: -f6 /etc/passwd | sort -u); do
-[[ -e "${i}" ]] && find "${i}" -type f -name '.*_history' -delete
-done
-
-##### Time taken
-FINISHTIME=$(date +%s)
-
-cat dnsentries.txt
-echo -e "\n ${YELLOW}[i]${RESET} Time (roughly) taken: ${YELLOW}$(( $(( FINISHTIME - STARTTIME )) / 60 )) minutes${RESET}"
-echo -e "\n ${YELLOW}[i]${RESET} Please reboot the system now to ensure all changes are taken. ${YELLOW}${RESET}"
