@@ -2,7 +2,7 @@
 
 #**************************************************************************#
 #  Filename: phish_build.sh             (Created: 2020-02-26)              #
-#                                       (Updated: YYYY-MM-DD)              #
+#                                       (Updated: 2020-03-24)              #
 #  Info:                                                                   #
 #    Installs, configures, and deploys a phishing server with GoPhish.     #
 #    Script based off this initial script:                                 #
@@ -63,14 +63,36 @@ export TERM=xterm
 ##### Change nameserver
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 
+CONTINUE='N'
+echo -e "${BLUE}        x.x.x.x${RESET}                            ${RED}y.y.y.y     ${RESET}"
+echo -e "${BLUE}   +--------------+${RESET}                    ${RED}+--------------+${RESET}"
+echo -e "${BLUE}   |.------------.|${RESET}                    ${RED}|.------------.|${RESET}"
+echo -e "${BLUE}   ||  Phishing  ||${RESET}                    ${RED}||  Phishing  ||${RESET}"
+echo -e "${BLUE}   ||   Server   ||${RESET}                    ${RED}|| Redirector ||${RESET}"
+echo -e "${BLUE}   ||            ||${RESET}                    ${RED}||   Server   ||${RESET}"
+echo -e "${BLUE}   ||            ||${RESET}                    ${RED}||            ||${RESET}"
+echo -e "${BLUE}   |+------------+|${RESET}                    ${RED}|+------------+|${RESET}"
+echo -e "${BLUE}   +-..--------..-+${RESET}                    ${RED}+-..--------..-+${RESET}"
+echo -e "${BLUE}   .--------------.${RESET}--------------------${RED}.--------------.${RESET}"
+echo -e "${BLUE}  / /============\ \                  ${RED}/ /============\ \\"
+echo -e "${BLUE} / /==============\ \                ${RED}/ /==============\ \\"
+echo -e "${BLUE}/____________________\              ${RED}/____________________\\"
+echo -e "${BLUE}\____________________/${RESET}              ${RED}\____________________/${RESET}"
+echo -e " ${BLUE}[*]${RESET} ${BOLD}Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with\n those required IPs. You should also have the DNS entries also specified within your configuraiton.\nContinue (y/N): ${RESET}"
+read -r CONTINUE
+
+if [[ "${CONTINUE^^}" == "N" ]]; then
+  exit
+fi
+
 ##### Check Internet access
 (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
 #--- Can we ping google?
 for i in {1..10}; do ping -c 1 -W ${i} www.google.com &>/dev/null && break; done
 #--- Run this, if we can't
 if [[ "$?" -ne 0 ]]; then
-  echo -e "\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
-  echo -e "\n ${RED}[!]${RESET} Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue" 1>&2
+  echo -e "\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)${RESET}" 1>&2
+  echo -e "\n ${RED}[!]${RESET} Will try and use ${YELLOW}DHCP${RESET} to 'fix' the issue${RESET}" 1>&2
   chattr -i /etc/resolv.conf 2>/dev/null
   dhclient -r
   #--- Second interface causing issues?
@@ -89,7 +111,7 @@ if [[ "$?" -ne 0 ]]; then
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
     echo -e "\n ${RED}[!]${RESET} ${RED}No Internet access${RESET}" 1>&2
-    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script${RESET}" 1>&2
     sleep 10
     exit 1
   fi
@@ -97,13 +119,13 @@ if [[ "$?" -ne 0 ]]; then
   if [[ "$?" -ne 0 && "$_TMP" == "true" ]]; then
     _TMP="false"
     echo -e "\n ${RED}[!]${RESET} ${RED}Possible DNS issues${RESET}(?)" 1>&2
-    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script" 1>&2
+    echo -e "\n ${RED}[!]${RESET} You will need to manually fix the issue, before re-running this script${RESET}" 1>&2
     sleep 10
     exit 1
   fi
   if [[ "$_TMP" == "false" ]]; then
-    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected"
-    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)"
+    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} VM Detected${RESET}"
+    (dmidecode | grep -iq virtual) && echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Try switching network adapter mode${RESET} (e.g. NAT/Bridged)${RESET}"
     echo -e "\n ${RED}[!]${RESET} Quitting..." 1>&2
     sleep 10
     exit 1
@@ -112,14 +134,7 @@ else
   echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Detected Internet access${RESET}" 1>&2
 fi
 
-CONTINUE='N'
-echo -e " ${BLUE}[*]${RESET} ${BOLD}Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with\n those required IPs. You should also have the DNS entries also specified within your configuraiton.\nContinue (y/N): ${RESET}"
-read -r CONTINUE
-if [[ "${CONTINUE^^}" == "N" ]]; then
-  exit
-fi
-
-echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your hostname/primary domain name eg: mail.example.com: ${RESET}"
+echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your hostname/primary domain name eg: gophish.example.com: ${RESET}"
 read -r PRIDOMAIN
 
 ##### FUNCTIONS #####
@@ -226,7 +241,7 @@ EOF
   reboot
 else
   rm -rf /root/.phish_firstrun >/dev/null 2>&1
-  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping this step.${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping that step.${RESET}"
 
   ##### SSH Configuration
   (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSH Configuration${RESET}"
@@ -243,25 +258,8 @@ else
   (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSL Configuration${RESET}"
   git clone -q -b master https://github.com/certbot/certbot.git /opt/letsencrypt \
   || echo -e "\n ${RED}[!] Issue when git cloning${RESET}" 1>&2
-
   pushd /opt/letsencrypt >/dev/null
-  SECDOMAINS=()
-  i=0
-  while true; do
-    echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter any secondary domains needed for engagement eg: website.example.com. Enter done to exit: ${RESET}"
-    read -r domain
-    if [[ "$domain" != "done" ]]; then
-      SECDOMAINS[$i]=$domain
-      else
-        break
-      fi
-      ((i++))
-  done
-  CLI_CMD="./certbot-auto certonly --standalone -d ${PRIDOMAIN}"
-  for x in "${SECDOMAINS[@]}"; do
-    CLI_CMD="$CLI_CMD -d $x"
-  done
-  CLI_CMD="$CLI_CMD -n --register-unsafely-without-email --agree-tos"
+  CLI_CMD="./certbot-auto certonly --standalone -d ${PRIDOMAIN} -n --register-unsafely-without-email --agree-tos"
   ${CLI_CMD} >/dev/null 2>&1
   popd >/dev/null
 
@@ -275,7 +273,7 @@ else
   unzip -qq /tmp/gophish.zip -d /opt/gophish
 
   pushd /opt/gophish
-  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter the phishing domain being used: ${RESET}"
+  echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter the url for the gophish server: ${RESET}"
   read -r PHISH_DOMAIN
   sed -i 's/"listen_url": "127.0.0.1:3333"/"listen_url": "0.0.0.0:3333"/g' config.json
   ssl_cert="/etc/letsencrypt/live/${PHISH_DOMAIN}/fullchain.pem"

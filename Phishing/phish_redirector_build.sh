@@ -2,7 +2,7 @@
 
 #**************************************************************************#
 #  Filename: phish_redirector_build.sh             (Created: 2020-02-27)   #
-#                                                  (Updated: YYYY-MM-DD)   #
+#                                                  (Updated: 2020-03-24)   #
 #  Info:                                                                   #
 #    Installs, configures, and deploys a phishing redirector.              #
 #                                                                          #
@@ -59,6 +59,28 @@ export TERM=xterm
 ##### Change nameserver
 echo 'nameserver 1.1.1.1' > /etc/resolv.conf
 
+CONTINUE='N'
+echo -e "${BLUE}        x.x.x.x${RESET}                            ${RED}y.y.y.y     ${RESET}"
+echo -e "${BLUE}   +--------------+${RESET}                    ${RED}+--------------+${RESET}"
+echo -e "${BLUE}   |.------------.|${RESET}                    ${RED}|.------------.|${RESET}"
+echo -e "${BLUE}   ||  Phishing  ||${RESET}                    ${RED}||  Phishing  ||${RESET}"
+echo -e "${BLUE}   ||   Server   ||${RESET}                    ${RED}|| Redirector ||${RESET}"
+echo -e "${BLUE}   ||            ||${RESET}                    ${RED}||   Server   ||${RESET}"
+echo -e "${BLUE}   ||            ||${RESET}                    ${RED}||            ||${RESET}"
+echo -e "${BLUE}   |+------------+|${RESET}                    ${RED}|+------------+|${RESET}"
+echo -e "${BLUE}   +-..--------..-+${RESET}                    ${RED}+-..--------..-+${RESET}"
+echo -e "${BLUE}   .--------------.${RESET}--------------------${RED}.--------------.${RESET}"
+echo -e "${BLUE}  / /============\ \                  ${RED}/ /============\ \\"
+echo -e "${BLUE} / /==============\ \                ${RED}/ /==============\ \\"
+echo -e "${BLUE}/____________________\              ${RED}/____________________\\"
+echo -e "${BLUE}\____________________/${RESET}              ${RED}\____________________/${RESET}"
+echo -e " ${BLUE}[*]${RESET} ${BOLD}Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with\n those required IPs. You should also have the DNS entries also specified within your configuraiton.\nContinue (y/N): ${RESET}"
+read -r CONTINUE
+
+if [[ "${CONTINUE^^}" == "N" ]]; then
+  exit
+fi
+
 ##### Check Internet access
 (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
 #--- Can we ping google?
@@ -106,13 +128,6 @@ if [[ "$?" -ne 0 ]]; then
   fi
 else
   echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Detected Internet access${RESET}" 1>&2
-fi
-
-CONTINUE='N'
-echo -e " ${BLUE}[*]${RESET} ${BOLD}Before continuing with this script make sure you have two servers setup Phishing and a Redirector along with\n those required IPs. You should also have the DNS entries also specified within your configuraiton.\nContinue (y/N): ${RESET}"
-read -r CONTINUE
-if [[ "${CONTINUE^^}" == "N" ]]; then
-  exit
 fi
 
 echo -e " ${BLUE}[*]${RESET} ${BOLD}Enter your hostname/primary domain name eg: mail.example.com: ${RESET}"
@@ -222,7 +237,7 @@ EOF
   reboot
 else
   rm -rf /root/.phish_firstrun >/dev/null 2>&1
-  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping this step.${RESET}"
+  echo -e "\n ${YELLOW}[i]${RESET} ${YELLOW}First run of the script already performed skipping that step.${RESET}"
 
   ##### SSH Configuration
   (( STAGE++ )); echo -e "\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}SSH Configuration${RESET}"
